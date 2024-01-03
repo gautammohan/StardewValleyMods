@@ -1,0 +1,10 @@
+﻿{
+    "Name": "Filter Hoppers",
+    "Author": "gm",
+    "Version": "0.0.1",
+    "MinimumApiVersion": "3.13.0",
+    "Description": "Modifies spacechase0's Super Hoppers to filter by contained items",
+    "UniqueID": "gm.FilterHoppers",
+    "EntryDll": "FilterHoppers.dll",
+    "UpdateKeys": []
+}
