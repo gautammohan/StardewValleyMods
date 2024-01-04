@@ -7,7 +7,7 @@ using StardewModdingAPI;
 using StardewValley;
 using SObject = StardewValley.Object;
 
-namespace SuperHopper.Patches
+namespace FilterHopper.Patches
 {
     /// <summary>Applies Harmony patches to <see cref="SObject"/>.</summary>
     [SuppressMessage("ReSharper", "InconsistentNaming", Justification = DiagnosticMessages.NamedForHarmony)]

@@ -5,10 +5,11 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Objects;
-using SuperHopper.Patches;
+using FilterHopper.Patches;
+using System.Linq;
 using SObject = StardewValley.Object;
 
-namespace SuperHopper
+namespace FilterHopper
 {
     internal class Mod : StardewModdingAPI.Mod
     {
@@ -17,6 +18,7 @@ namespace SuperHopper
         *********/
         /// <summary>The <see cref="Item.modData"/> flag which indicates a hopper is a super hopper.</summary>
         private readonly string ModDataFlag = "spacechase0.SuperHopper";
+        private readonly string MyDataFlag = "gm.FilterHopper";
 
 
         /*********
@@ -56,6 +58,7 @@ namespace SuperHopper
                         chest.Tint = Color.DarkViolet;
                         chest.heldObject.Value = (SObject)Game1.player.ActiveObject.getOne();
                         chest.modData[this.ModDataFlag] = "1";
+                        chest.modData[this.MyDataFlag] = "1";
 
                         if (Game1.player.ActiveObject.Stack > 1)
                             Game1.player.ActiveObject.Stack--;
@@ -70,6 +73,7 @@ namespace SuperHopper
                     chest.Tint = Color.White;
                     chest.heldObject.Value = null;
                     chest.modData.Remove(this.ModDataFlag);
+                    chest.modData.Remove(this.MyDataFlag);
 
                     Game1.player.addItemToInventory(new SObject(SObject.iridiumBar, 1));
 
@@ -90,33 +94,44 @@ namespace SuperHopper
             // fix flag if needed
             if (!hopper.modData.ContainsKey(this.ModDataFlag))
                 hopper.modData[this.ModDataFlag] = "1";
+            if (!hopper.modData.ContainsKey(this.MyDataFlag))
+                hopper.modData[this.MyDataFlag] = "1";
+
 
             // check for bottom chest
             if (!location.objects.TryGetValue(hopper.TileLocation + new Vector2(0, 1), out SObject objBelow) || objBelow is not Chest chestBelow)
                 return;
 
-            // transfer current inventory if any
-            hopper.clearNulls();
-            var hopperItems = hopper.GetItemsForPlayer(hopper.owner.Value);
-            for (int i = hopperItems.Count - 1; i >= 0; i--)
-            {
-                Item item = hopperItems[i];
-                if (chestBelow.addItem(item) == null)
-                    hopperItems.RemoveAt(i);
-            }
-
             // check for top chest
             if (!location.objects.TryGetValue(hopper.TileLocation - new Vector2(0, 1), out SObject objAbove) || objAbove is not Chest chestAbove)
                 return;
 
-            // transfer items
+            hopper.clearNulls();
+            var hopperItems = hopper.GetItemsForPlayer(hopper.owner.Value);
+
+
             chestAbove.clearNulls();
             var chestAboveItems = chestAbove.GetItemsForPlayer(hopper.owner.Value);
-            for (int i = chestAboveItems.Count - 1; i >= 0; i--)
+
+            // if hopper contains no items, transfer items normally. otherwise, only transfer items matching the hopper's inventory
+            if (hopperItems.Count == 0)
             {
-                Item item = chestAboveItems[i];
-                if (chestBelow.addItem(item) == null)
-                    chestAboveItems.RemoveAt(i);
+                for (int i = chestAboveItems.Count - 1; i >= 0; i--)
+                {
+                    Item item = chestAboveItems[i];
+                    if (chestBelow.addItem(item) == null)
+                        chestAboveItems.RemoveAt(i);
+                }
+            }
+            else
+            {
+                for (int i = chestAboveItems.Count - 1; i >= 0; i--)
+                {
+                    Item item = chestAboveItems[i];
+                    Item foundInHopper = hopper.items.FirstOrDefault(hopperItem => hopperItem.Name == item.Name);
+                    if (foundInHopper != null && chestBelow.addItem(item) == null)
+                        chestAboveItems.RemoveAt(i);
+                }  
             }
         }
 
